@@ -28,9 +28,9 @@ router.post('/start', (req, res) => {
 
     const session = mockSessionStore.create(spec, projectId);
 
-    const host = req.hostname || 'localhost';
-    const port = String(process.env.PORT || 3001);
-    const mockBaseUrl = `http://${host}:${port}/mock/${session.projectId}`;
+    const protocol = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'http';
+    const host = (req.headers['x-forwarded-host'] as string) || req.get('host') || 'localhost:3001';
+    const mockBaseUrl = `${protocol}://${host}/mock/${session.projectId}`;
 
     res.status(201).json({
       projectId: session.projectId,
