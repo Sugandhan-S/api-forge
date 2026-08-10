@@ -13,11 +13,27 @@ dotenv.config();
 
 /* ─── Config ─── */
 const PORT = process.env.PORT || 3001;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+
+/* ─── Flexible CORS Setup ─── */
+const configuredOrigins = (process.env.CORS_ORIGIN || '*')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''));
 
 /* ─── Express App ─── */
 const app = express();
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || configuredOrigins.includes('*') || configuredOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // Dynamically allow origin for seamless Vercel preview deploys & custom domains
+        callback(null, origin);
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '10mb' }));
 
 /* ─── HTTP Server ─── */
