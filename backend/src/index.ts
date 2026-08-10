@@ -1,7 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
 
 import openapiRouter from './routes/openapi';
@@ -9,7 +8,6 @@ import mockRouter from './routes/mock';
 import aiRouter from './routes/ai';
 import docsRouter from './routes/docs';
 import { mockSessionStore } from './mock/mockEngine';
-import { setupCollabHandlers, getRoomStats } from './websocket/collabHandler';
 
 dotenv.config();
 
@@ -25,21 +23,8 @@ app.use(express.json({ limit: '10mb' }));
 /* ─── HTTP Server ─── */
 const httpServer = createServer(app);
 
-/* ─── Socket.IO ─── */
-const io = new SocketIOServer(httpServer, {
-  cors: {
-    origin: CORS_ORIGIN,
-    methods: ['GET', 'POST', 'DELETE'],
-    credentials: true,
-  },
-});
-
-/* ─── WebSocket Collaboration (Phase 5) ─── */
-setupCollabHandlers(io);
-
 /* ─── Health Check ─── */
 app.get('/api/health', (_req, res) => {
-  const roomStats = getRoomStats();
   res.json({
     status: 'ok',
     service: 'apiforge-backend',
@@ -47,10 +32,9 @@ app.get('/api/health', (_req, res) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     activeMockSessions: mockSessionStore.list().length,
-    collaboration: roomStats,
     ai: {
       configured: !!process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      model: process.env.OPENAI_MODEL || 'gemini-1.5-flash',
     },
   });
 });
@@ -96,16 +80,16 @@ httpServer.listen(PORT, () => {
   ║   ⚡ APIForge Backend v0.4.0                 ║
   ║                                              ║
   ║   HTTP:   http://localhost:${PORT}             ║
-  ║   WS:     ws://localhost:${PORT}               ║
   ║   Health: /api/health                        ║
   ║   Mock:   /mock/:projectId/*                 ║
   ║   AI:     /api/ai/run                        ║
   ║   Docs:   /docs/                             ║
   ║                                              ║
-  ║   AI: ${process.env.OPENAI_API_KEY ? '✅ OpenAI connected' : '⚠️  Template mode (no API key)'}       ║
+  ║   AI: ${process.env.OPENAI_API_KEY ? '✅ AI service connected' : '⚠️  Template mode (no API key)'}          ║
   ║                                              ║
   ╚══════════════════════════════════════════════╝
   `);
 });
 
-export { app, io };
+export { app };
+

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Globe, Database, ShieldCheck, Plus } from 'lucide-react';
 import { useCanvasStore } from '../stores/canvasStore';
-import type { EndpointNodeData, DatabaseNodeData, AuthNodeData } from '../nodes/types';
+import type { EndpointNodeData, DatabaseNodeData, AuthNodeData, ForgeNodeData } from '../nodes/types';
 import type { Node } from '@xyflow/react';
 
 let nodeIdCounter = 100;
@@ -79,7 +79,7 @@ export function Toolbar() {
       const data = getDefaultNodeData(type);
 
       // Offset each new node randomly so they don't stack
-      const node: Node = {
+      const node: Node<ForgeNodeData> = {
         id,
         type,
         position: {

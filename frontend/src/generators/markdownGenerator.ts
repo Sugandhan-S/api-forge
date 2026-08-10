@@ -53,7 +53,7 @@ function documentEndpoint(ep: ASTEndpoint, schemas: ASTSchema[], securitySchemes
   if (ep.security.length > 0) {
     const schemeNames = ep.security
       .map((id) => securitySchemes.find((s) => s.id === id)?.name)
-      .filter(Boolean);
+      .filter((s): s is string => Boolean(s));
     lines.push(`**Security:** ${schemeNames.map(codeInline).join(', ')}`);
     lines.push('');
   }

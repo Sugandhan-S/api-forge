@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react';
 import {
   Terminal, Zap, Code, Sparkles, Download,
-  LogIn, LogOut, User2, Cloud, CloudOff,
+  LogIn, LogOut, User2, Cloud,
   Save, CheckCircle2, Loader2, XCircle,
 } from 'lucide-react';
-import type { CollabPeer } from '../hooks/useCollaboration';
 import type { SaveStatus } from '../hooks/useProject';
 
 interface TopBarProps {
@@ -14,31 +13,14 @@ interface TopBarProps {
   onOpenExportPanel?: () => void;
   onOpenAuthModal?: () => void;
   isMockRunning?: boolean;
-  peers?: CollabPeer[];
-  myColor?: string;
   saveStatus?: SaveStatus;
   isAuthenticated?: boolean;
   isGuest?: boolean;
   userName?: string;
   projectTitle?: string;
   onProjectTitleChange?: (title: string) => void;
+  onSaveProject?: () => void;
   onSignOut?: () => void;
-}
-
-/* ─── Peer Avatar ─── */
-function PeerAvatar({ peer }: { peer: CollabPeer }) {
-  const initials = peer.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-  return (
-    <div
-      className="w-7 h-7 rounded-full flex items-center justify-center
-                 text-[10px] font-bold text-white ring-2 ring-[#12131a]
-                 -ml-2 first:ml-0 cursor-default transition-transform hover:z-10 hover:scale-110"
-      style={{ backgroundColor: peer.color }}
-      title={`${peer.name} is collaborating`}
-    >
-      {initials}
-    </div>
-  );
 }
 
 /* ─── Save Status Indicator ─── */
@@ -65,14 +47,13 @@ export function TopBar({
   onOpenExportPanel,
   onOpenAuthModal,
   isMockRunning = false,
-  peers = [],
-  myColor,
   saveStatus = 'idle',
   isAuthenticated = false,
   isGuest = false,
   userName,
   projectTitle = 'User Service API',
   onProjectTitleChange,
+  onSaveProject,
   onSignOut,
 }: TopBarProps) {
   const [editingTitle, setEditingTitle] = useState(false);
@@ -93,7 +74,7 @@ export function TopBar({
   return (
     <header className="h-12 bg-[#12131a]/90 backdrop-blur-xl border-b border-[#1e2030]
                        flex items-center justify-between px-4 z-50 relative shrink-0">
-      {/* ── Left: Logo + Collab Presence ── */}
+      {/* ── Left: Logo ── */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="p-1 rounded-lg bg-gradient-to-br from-[#6c63ff] to-[#a78bfa]
@@ -105,25 +86,10 @@ export function TopBar({
             <span className="text-[10px] text-[#6e7191] font-medium">v0.4</span>
           </div>
         </div>
-
-        {/* Collab avatars */}
-        {peers.length > 0 && (
-          <div className="flex items-center pl-1">
-            {peers.slice(0, 5).map((p) => <PeerAvatar key={p.socketId} peer={p} />)}
-            {peers.length > 5 && (
-              <div className="w-7 h-7 rounded-full bg-[#1a1b25] border border-[#1e2030]
-                             flex items-center justify-center text-[9px] text-[#6e7191] -ml-2">
-                +{peers.length - 5}
-              </div>
-            )}
-            <span className="ml-2 text-[10px] text-[#6e7191]">
-              {peers.length} collaborator{peers.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* ── Center: Project title (editable) ── */}
+
+      {/* ── Center: Project title (editable) + Manual Save ── */}
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
         {editingTitle ? (
           <input
@@ -144,6 +110,23 @@ export function TopBar({
             title="Click to rename project"
           >
             {projectTitle}
+          </button>
+        )}
+
+        {/* Manual Save Button */}
+        {onSaveProject && (
+          <button
+            type="button"
+            onClick={onSaveProject}
+            disabled={saveStatus === 'saving'}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#1a1b25]
+                       border border-[#1e2030] text-[#6e7191] hover:text-[#e4e5f1]
+                       hover:border-[#2a2d45] text-[10px] font-medium transition-all
+                       disabled:opacity-50 cursor-pointer"
+            title="Save changes now"
+          >
+            <Save className="w-3 h-3 text-[#6c63ff]" />
+            Save
           </button>
         )}
 
@@ -217,7 +200,7 @@ export function TopBar({
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center
                          text-[10px] font-bold text-white cursor-default"
-              style={{ backgroundColor: myColor || '#6c63ff' }}
+              style={{ backgroundColor: '#6c63ff' }}
               title={userName || 'You'}
             >
               {(userName || 'U').charAt(0).toUpperCase()}

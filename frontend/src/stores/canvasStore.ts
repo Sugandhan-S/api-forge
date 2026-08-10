@@ -11,8 +11,8 @@ import {
 } from '@xyflow/react';
 import type { ForgeNodeData } from '../nodes/types';
 
-/* ─── Initial Canvas State ─── */
-const initialNodes: Node<ForgeNodeData>[] = [
+/* ─── Default Canvas State (used as fallback for new/guest users) ─── */
+export const defaultNodes: Node<ForgeNodeData>[] = [
   {
     id: 'endpoint-1',
     type: 'endpoint',
@@ -64,7 +64,7 @@ const initialNodes: Node<ForgeNodeData>[] = [
   },
 ];
 
-const initialEdges: Edge[] = [
+export const defaultEdges: Edge[] = [
   {
     id: 'e-ep1-db1',
     source: 'endpoint-1',
@@ -111,20 +111,22 @@ interface CanvasStore {
   addEdge: (edge: Edge) => void;
   deleteEdge: (edgeId: string) => void;
   setProjectTitle: (title: string) => void;
-  // Remote (collab) apply — does NOT re-broadcast
-  applyRemoteNodeMove: (nodeId: string, position: { x: number; y: number }) => void;
+  loadCanvasState: (title: string, nodes: Node<ForgeNodeData>[], edges: Edge[]) => void;
 }
 
 /* ─── Zustand Store ─── */
+// Start with empty state — useProject will hydrate from Supabase / localStorage
+// after auth resolves. This prevents the default demo canvas from flashing
+// on the first paint for authenticated users.
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
-  nodes: initialNodes,
-  edges: initialEdges,
+  nodes: [],
+  edges: [],
   selectedNodeId: null,
-  projectTitle: 'User Service API',
-  projectId: 'default-project',
+  projectTitle: '',
+  projectId: '00000000-0000-0000-0000-000000000001',
 
   onNodesChange: (changes) => {
-    set({ nodes: applyNodeChanges(changes, get().nodes) });
+    set({ nodes: applyNodeChanges(changes, get().nodes) as Node<ForgeNodeData>[] });
   },
 
   onEdgesChange: (changes) => {
@@ -179,11 +181,13 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     set({ projectTitle: title });
   },
 
-  applyRemoteNodeMove: (nodeId, position) => {
+  loadCanvasState: (title, nodes, edges) => {
     set({
-      nodes: get().nodes.map((n) =>
-        n.id === nodeId ? { ...n, position } : n
-      ),
+      projectTitle: title,
+      nodes,
+      edges,
+      selectedNodeId: null,
     });
   },
 }));
+

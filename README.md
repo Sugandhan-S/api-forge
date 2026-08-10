@@ -1,6 +1,6 @@
 # ⚡ APIForge — Visual API Designer & Mock Engine
 
-> Design, mock, test, and document production-ready APIs visually with real-time collaboration and AI assistance.
+> Design, mock, test, and document production-ready APIs visually with AI assistance.
 
 ![APIForge Architecture](https://img.shields.io/badge/Architecture-Monorepo-6c63ff)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
@@ -20,7 +20,6 @@
 - 📋 **OpenAPI 3.0.3 Spec Generator**: Real-time bidirectional conversion between visual node AST and valid OpenAPI YAML/JSON specs.
 - 🧪 **Instant Mock Server**: Live Express mock engine with intelligent schema-based data generation (`schemaFaker`) and latency simulation.
 - 🤖 **AI Assistant**: Automated endpoint descriptions, request body generation, test suite synthesis, and static API design issue detection.
-- 👥 **Real-Time Collaboration**: Multi-user cursor tracking and canvas synchronization powered by Socket.IO.
 - 📦 **Multi-Format Export**: Export specs directly to OpenAPI 3.0 (YAML/JSON), Postman Collection v2.1, Markdown documentation, or view live in Swagger UI.
 - 🔐 **Persistence & Auth**: Cloud saving with Supabase (PostgreSQL + RLS) with automatic Guest Mode fallback to `localStorage`.
 
@@ -28,7 +27,7 @@
 
 ## 🏗️ Repository Architecture
 
-APIForge is organized as a lightweight monorepo:
+APIForge is organized as a lightweight monorepo with clean stateless REST architecture:
 
 ```text
 api-forge/
@@ -36,17 +35,16 @@ api-forge/
 │   ├── src/
 │   │   ├── components/   # UI panels (AIPanel, SpecViewer, MockPanel, ExportPanel)
 │   │   ├── generators/   # AST builder, OpenAPI generator, Postman collection builder
-│   │   ├── hooks/        # Auth, Collaboration, Mock server, and Project state hooks
+│   │   ├── hooks/        # Auth, Mock server, and Project state hooks
 │   │   ├── inspector/    # Node properties inspectors
 │   │   ├── nodes/        # React Flow custom node components (Endpoint, DB, Auth)
 │   │   └── stores/       # Zustand canvas state store
 │   └── package.json
-├── backend/              # Node.js + Express 5 + Socket.IO server
+├── backend/              # Node.js + Express 5 REST API & Mock Engine
 │   ├── src/
 │   │   ├── ai/           # Gemini / OpenAI API integration & template fallbacks
 │   │   ├── mock/         # In-memory Express router generator & schema faker
-│   │   ├── routes/       # OpenAPI, Mock, AI, and Swagger UI doc endpoints
-│   │   └── websocket/    # Socket.IO room collaboration handlers
+│   │   └── routes/       # OpenAPI, Mock, AI, and Swagger UI doc endpoints
 │   └── package.json
 ├── .gitignore            # Root Git ignore rules
 ├── .env.example          # Template environment configurations
@@ -66,7 +64,7 @@ api-forge/
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/api-forge.git
+git clone https://github.com/Sugandhan-S/api-forge.git
 cd api-forge
 
 # Install backend dependencies
@@ -114,19 +112,19 @@ Visit **`http://localhost:5173`** in your browser to launch APIForge.
 
 ## 💻 Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, `@xyflow/react` (React Flow), Zustand, Lucide React, Socket.IO Client, `@supabase/supabase-js`.
-- **Backend**: Node.js, Express 5, TypeScript, Socket.IO, `swagger-ui-dist`, `js-yaml`, OpenAI SDK (Gemini/OpenAI compliant).
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, `@xyflow/react` (React Flow), Zustand, Lucide React, `@supabase/supabase-js`.
+- **Backend**: Node.js, Express 5, TypeScript, `swagger-ui-dist`, `js-yaml`, OpenAI SDK (Gemini/OpenAI compliant).
 - **Tooling**: Oxlint, tsx, Vite.
 
 ---
 
 ## 🚢 Deployment Strategy
 
-For hosting a production or portfolio instance of APIForge:
+APIForge uses a 100% stateless REST API architecture, making deployment fast and effortless:
 
-- **Frontend**: Deploy `frontend/` on **Vercel** or **Netlify** (Static SPA with Client-Side Routing).
-- **Backend**: Deploy `backend/` on **Render**, **Railway**, or **Fly.io** (Requires a persistent server for WebSocket collaboration & mock server state).
-- **Database**: **Supabase** PostgreSQL instance for cloud project persistence and user authentication.
+- **Frontend**: Deploy `frontend/` on **Vercel**, **Netlify**, or **Cloudflare Pages** (Static SPA).
+- **Backend**: Deploy `backend/` on **Vercel Serverless Functions**, **Render**, **Railway**, or **Serverless API**.
+- **Database**: **Supabase** PostgreSQL instance for project cloud storage and user authentication.
 
 ---
 

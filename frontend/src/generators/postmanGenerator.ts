@@ -1,4 +1,4 @@
-import type { ApiForgeAST, ASTEndpoint, ASTSchema, ASTSecurityScheme } from './ast.types';
+import type { ApiForgeAST, ASTEndpoint, ASTSecurityScheme } from './ast.types';
 
 /* ─── Postman Collection v2.1 types ─── */
 
@@ -116,7 +116,7 @@ function buildPathVariables(path: string): Array<{ key: string; value: string; d
   });
 }
 
-function buildRequest(endpoint: ASTEndpoint, baseUrl: string, schemes: ASTSecurityScheme[]): PostmanRequest {
+function buildRequest(endpoint: ASTEndpoint, _baseUrl: string, schemes: ASTSecurityScheme[]): PostmanRequest {
   const segments = toPathSegments(endpoint.path);
   const pathVars = buildPathVariables(endpoint.path);
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);

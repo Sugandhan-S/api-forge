@@ -3,7 +3,6 @@ import type {
   ApiForgeAST,
   ASTEndpoint,
   ASTSchema,
-  ASTSchemaProperty,
   ASTSecurityScheme,
 } from './ast.types';
 
@@ -452,7 +451,6 @@ export function specToYAML(spec: OpenAPISpec): string {
     lineWidth: 120,
     noRefs: true,
     sortKeys: false,
-    quotingType: '\'',
     forceQuotes: false,
   });
 }

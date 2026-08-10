@@ -431,7 +431,7 @@ export function MockPanel({ isOpen, onClose }: MockPanelProps) {
                   <p className="text-[11px] text-[#2a2d45] mt-1">Add endpoint nodes to the canvas</p>
                 </div>
               ) : (
-                session.routes.map((route) => {
+                session?.routes.map((route) => {
                   const key = `${route.method}:${route.path}`;
                   return (
                     <RouteRow
