@@ -334,7 +334,11 @@ export function AIPanel({ isOpen, onClose }: AIPanelProps) {
             <button
               type="button"
               onClick={() => {
-                applyGeneratedArchitecture(arch);
+                applyGeneratedArchitecture({
+                  endpoints: arch.endpoints || [],
+                  databases: arch.databases || [],
+                  edges: arch.edges || [],
+                });
                 clear();
                 onClose();
               }}

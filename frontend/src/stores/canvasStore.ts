@@ -113,7 +113,7 @@ interface CanvasStore {
   deleteEdge: (edgeId: string) => void;
   setProjectTitle: (title: string) => void;
   loadCanvasState: (title: string, nodes: Node<ForgeNodeData>[], edges: Edge[]) => void;
-  applyGeneratedArchitecture: (payload: { endpoints: any[]; databases: any[]; edges: any[] }) => void;
+  applyGeneratedArchitecture: (payload: { endpoints?: any[]; databases?: any[]; edges?: any[] }) => void;
 }
 
 /* ─── Zustand Store ─── */
