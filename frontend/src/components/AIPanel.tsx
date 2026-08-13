@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   X, Sparkles, Wand2, TestTube2, Bug, Loader2,
   AlertCircle, CheckCircle2, ChevronRight,
-  Info, AlertTriangle, XCircle, ArrowRight,
+  Info, AlertTriangle, XCircle, ArrowRight, ArrowUp,
   Clock, RefreshCw, Save, Trash2, TriangleAlert,
 } from 'lucide-react';
 import { useAI, type AIAction, type AIIssue, type CachedResult } from '../hooks/useAI';
@@ -268,7 +268,8 @@ export function AIPanel({ isOpen, onClose }: AIPanelProps) {
     clear, clearCache, saveToProject, isSaving,
   } = useAI();
 
-  const { selectedNodeId } = useCanvasStore();
+  const { selectedNodeId, applyGeneratedArchitecture } = useCanvasStore();
+  const [prompt, setPrompt] = useState('');
 
   if (!isOpen) return null;
 
@@ -313,6 +314,36 @@ export function AIPanel({ isOpen, onClose }: AIPanelProps) {
                   <span className="text-[10px] text-[#6e7191] ml-auto">{field.description}</span>
                 </div>
               ))}
+          </div>
+        );
+      case 'generate-architecture':
+        const arch = r.result as { endpoints?: any[]; databases?: any[]; edges?: any[] };
+        const epCount = arch.endpoints?.length || 0;
+        const dbCount = arch.databases?.length || 0;
+        const edgeCount = arch.edges?.length || 0;
+        
+        return (
+          <div className="flex flex-col items-center py-6 text-center">
+            <div className="p-3 rounded-full bg-[#1a1b25] mb-3 border border-[#6c63ff]/20">
+              <Sparkles className="w-6 h-6 text-[#6c63ff]" />
+            </div>
+            <p className="text-sm font-medium text-[#e4e5f1]">Architecture Generated</p>
+            <p className="text-[11px] text-[#6e7191] mt-1 mb-4">
+              AI suggested {epCount} endpoints, {dbCount} databases, and {edgeCount} connections.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                applyGeneratedArchitecture(arch);
+                clear();
+                onClose();
+              }}
+              className="px-4 py-2 bg-[#6c63ff] text-white text-[11px] font-bold rounded-lg
+                         shadow-[0_0_15px_rgba(108,99,255,0.4)] hover:shadow-[0_0_20px_rgba(108,99,255,0.6)]
+                         transition-all cursor-pointer"
+            >
+              Apply to Canvas
+            </button>
           </div>
         );
       default:
@@ -448,6 +479,42 @@ export function AIPanel({ isOpen, onClose }: AIPanelProps) {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Co-Pilot Chat Input */}
+        <div className="p-3 border-t border-[#1e2030] bg-[#12131a]">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!prompt.trim() || isLoading) return;
+              void selectAction('generate-architecture', true, undefined, prompt);
+              setPrompt('');
+            }}
+            className="relative"
+          >
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="e.g. Build a Stripe payment workflow..."
+              disabled={isLoading}
+              className="w-full bg-[#1a1b25] border border-[#1e2030] rounded-xl pl-4 pr-10 py-3
+                         text-[11px] text-[#e4e5f1] placeholder-[#6e7191] focus:outline-none focus:border-[#6c63ff]
+                         transition-colors disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!prompt.trim() || isLoading}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg
+                         bg-[#6c63ff] text-white hover:bg-[#5b54d6] transition-colors
+                         disabled:opacity-50 disabled:bg-[#1e2030] disabled:text-[#6e7191]"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+          </form>
+          <p className="text-[9px] text-[#6e7191] text-center mt-2">
+            AI Co-Pilot generates complete architectures instantly.
+          </p>
         </div>
 
         {/* Footer */}

@@ -7,7 +7,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 /* ─── Types ─── */
 
-export type AIAction = 'describe' | 'suggest-body' | 'generate-tests' | 'detect-issues';
+export type AIAction = 'describe' | 'suggest-body' | 'generate-tests' | 'detect-issues' | 'generate-architecture';
 export type AIStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export interface AIIssue {
@@ -45,8 +45,8 @@ export interface UseAIReturn {
   activeAction: AIAction | null;
   error: string | null;
   aiConfigured: boolean;
-  selectAction: (action: AIAction, forceRerun?: boolean, targetEndpointId?: string) => Promise<void>;
-  run: (action: AIAction, targetEndpointId?: string) => Promise<void>;
+  selectAction: (action: AIAction, forceRerun?: boolean, targetEndpointId?: string, prompt?: string) => Promise<void>;
+  run: (action: AIAction, targetEndpointId?: string, prompt?: string) => Promise<void>;
   applyDescriptions: (descriptions: Record<string, string>) => void;
   clear: () => void;
   clearCache: (action: AIAction) => void;
@@ -154,7 +154,7 @@ export function useAI(): UseAIReturn {
 
   /* ── Force run network call ── */
   const run = useCallback(
-    async (action: AIAction, targetEndpointId?: string) => {
+    async (action: AIAction, targetEndpointId?: string, prompt?: string) => {
       setActiveAction(action);
       setStatus('loading');
       setError(null);
@@ -165,7 +165,7 @@ export function useAI(): UseAIReturn {
         const res = await fetch(`${BACKEND_URL}/api/ai/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, ast, targetEndpointId }),
+          body: JSON.stringify({ action, ast, targetEndpointId, prompt }),
         });
 
         if (!res.ok) {
@@ -197,13 +197,14 @@ export function useAI(): UseAIReturn {
 
   /* ── Smart Select Action: Uses cache if present, fetches ONLY if forceRerun or no cache ── */
   const selectAction = useCallback(
-    async (action: AIAction, forceRerun = false, targetEndpointId?: string) => {
+    async (action: AIAction, forceRerun = false, targetEndpointId?: string, prompt?: string) => {
       setActiveAction(action);
       setError(null);
 
       const existingCache = loadCachedForAction(action);
 
-      if (!forceRerun && existingCache) {
+      // Don't use cache for prompt-based architecture generation
+      if (!forceRerun && existingCache && action !== 'generate-architecture') {
         // Cache hit! Display cached result immediately without network fetch
         setResult(existingCache.entry.result);
         setStatus('idle');
@@ -211,7 +212,7 @@ export function useAI(): UseAIReturn {
       }
 
       // No cache OR user explicitly requested re-run -> fetch from network
-      await run(action, targetEndpointId);
+      await run(action, targetEndpointId, prompt);
     },
     [loadCachedForAction, run]
   );
