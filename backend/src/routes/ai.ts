@@ -10,20 +10,20 @@ const router = Router();
  */
 router.post('/run', async (req, res) => {
   try {
-    const { action, ast, targetEndpointId } = req.body;
+    const { action, ast, targetEndpointId, prompt } = req.body;
 
     if (!action || !ast) {
       res.status(400).json({ error: 'Missing required fields: action, ast' });
       return;
     }
 
-    const validActions: AIAction[] = ['describe', 'suggest-body', 'generate-tests', 'detect-issues'];
+    const validActions: AIAction[] = ['describe', 'suggest-body', 'generate-tests', 'detect-issues', 'generate-architecture'];
     if (!validActions.includes(action as AIAction)) {
       res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
       return;
     }
 
-    const result = await runAI({ action: action as AIAction, ast, targetEndpointId });
+    const result = await runAI({ action: action as AIAction, ast, targetEndpointId, prompt });
     res.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'AI service error';

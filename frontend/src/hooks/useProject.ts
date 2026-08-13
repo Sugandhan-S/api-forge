@@ -18,8 +18,10 @@ const LS_KEY = (projectId: string) => `apiforge:project:${projectId}`;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DEFAULT_UUID = '00000000-0000-0000-0000-000000000001';
 
-function ensureUUID(id: string): string {
-  if (UUID_REGEX.test(id)) return id;
+function ensureUUID(id: string, userId?: string): string {
+  if (UUID_REGEX.test(id) && id !== DEFAULT_UUID) return id;
+  // If it's the default UUID or invalid, and we have a user, use the user's ID as their default project ID
+  if (userId && UUID_REGEX.test(userId)) return userId;
   return DEFAULT_UUID;
 }
 
@@ -60,7 +62,7 @@ export function useProject(user: User | null, authLoading: boolean = false): Use
     setIsHydrating(true);
 
     async function hydrate() {
-      const targetUUID = ensureUUID(projectId);
+      const targetUUID = ensureUUID(projectId, user?.id);
       let loaded = false;
 
       // Try Supabase first if authenticated
@@ -154,7 +156,7 @@ export function useProject(user: User | null, authLoading: boolean = false): Use
             const { error } = await supabase
               .from('projects')
               .upsert({
-                id: ensureUUID(projectId),
+                id: ensureUUID(projectId, user.id),
                 user_id: user.id,
                 title: projectTitle,
                 canvas_state: { nodes, edges },
@@ -193,7 +195,7 @@ export function useProject(user: User | null, authLoading: boolean = false): Use
         const { error } = await supabase
           .from('projects')
           .upsert({
-            id: ensureUUID(projectId),
+            id: ensureUUID(projectId, user.id),
             user_id: user.id,
             title: projectTitle,
             canvas_state: { nodes, edges },
@@ -218,7 +220,7 @@ export function useProject(user: User | null, authLoading: boolean = false): Use
   /* ── 4. Manual Load ── */
   const loadProject = useCallback(
     async (targetProjectId: string) => {
-      const targetUUID = ensureUUID(targetProjectId);
+      const targetUUID = ensureUUID(targetProjectId, user?.id);
       try {
         if (isSupabaseConfigured && supabase && user) {
           const { data, error } = await supabase

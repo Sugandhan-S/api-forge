@@ -221,9 +221,14 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
   // Dynamic import so it doesn't crash if openai isn't installed
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const OpenAI = require('openai');
+  let baseURL = process.env.OPENAI_BASE_URL;
+  if (baseURL && !baseURL.endsWith('/')) {
+    baseURL += '/';
+  }
+
   const client = new OpenAI({
     apiKey,
-    baseURL: process.env.OPENAI_BASE_URL || undefined,
+    baseURL: baseURL || undefined,
   });
 
   const completion = await client.chat.completions.create({
@@ -233,7 +238,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
       { role: 'user', content: prompt },
     ],
     temperature: 0.7,
-    max_tokens: 1500,
+    max_tokens: 8000,
   });
 
   return completion.choices[0]?.message?.content || '';
@@ -241,12 +246,13 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
 
 /* ─── AI Service Exports ─── */
 
-export type AIAction = 'describe' | 'suggest-body' | 'generate-tests' | 'detect-issues';
+export type AIAction = 'describe' | 'suggest-body' | 'generate-tests' | 'detect-issues' | 'generate-architecture';
 
 export interface AIRequest {
   action: AIAction;
   ast: ApiForgeAST;
   targetEndpointId?: string;
+  prompt?: string;
 }
 
 export interface AIResponse {
@@ -265,6 +271,49 @@ export async function runAI(request: AIRequest): Promise<AIResponse> {
     : undefined;
 
   switch (action) {
+    case 'generate-architecture': {
+      if (!hasOpenAI) {
+        return { action, result: { error: 'AI key not configured' }, usedAI: false };
+      }
+      if (!request.prompt) {
+        return { action, result: { error: 'Prompt is required' }, usedAI: false };
+      }
+      
+      try {
+        const sysPrompt = `You are an expert API architect. The user wants to build a feature.
+Return ONLY a valid JSON object with the following structure. Do not use markdown blocks.
+{
+  "endpoints": [
+    { "id": "ep-1", "method": "POST", "path": "/api/...", "label": "..." }
+  ],
+  "databases": [
+    { 
+      "id": "db-1", 
+      "label": "...", 
+      "tableName": "...", 
+      "columns": [{ "name": "id", "type": "uuid", "primaryKey": true }]
+    }
+  ],
+  "edges": [
+    { "id": "e-1", "source": "ep-1", "target": "db-1" }
+  ]
+}
+The IDs must be simple strings (e.g., ep-1, db-1). Do not return anything else.`;
+
+        const rawResult = await callOpenAI(request.prompt, sysPrompt);
+        console.log('[AI rawResult]:', rawResult);
+        
+        // Strip markdown if the LLM ignores instructions
+        const cleanJson = rawResult.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+        
+        return { action, result: parsed, usedAI: true, model: process.env.OPENAI_MODEL || 'gpt-4o-mini' };
+      } catch (err: any) {
+        console.error('[AI Architecture Error]:', err);
+        return { action, result: { error: `Failed to generate architecture: ${err.message}` }, usedAI: true };
+      }
+    }
+
     case 'describe': {
       if (hasOpenAI) {
         try {

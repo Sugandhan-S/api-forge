@@ -10,6 +10,7 @@ import {
   type Edge,
 } from '@xyflow/react';
 import type { ForgeNodeData } from '../nodes/types';
+import { layoutNodes } from '../utils/layoutEngine';
 
 /* ─── Default Canvas State (used as fallback for new/guest users) ─── */
 export const defaultNodes: Node<ForgeNodeData>[] = [
@@ -112,6 +113,7 @@ interface CanvasStore {
   deleteEdge: (edgeId: string) => void;
   setProjectTitle: (title: string) => void;
   loadCanvasState: (title: string, nodes: Node<ForgeNodeData>[], edges: Edge[]) => void;
+  applyGeneratedArchitecture: (payload: { endpoints?: any[]; databases?: any[]; edges?: any[] }) => void;
 }
 
 /* ─── Zustand Store ─── */
@@ -187,6 +189,69 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       nodes,
       edges,
       selectedNodeId: null,
+    });
+  },
+
+  applyGeneratedArchitecture: (payload) => {
+    const idMap = new Map<string, string>();
+    const newNodes: Node<ForgeNodeData>[] = [];
+    const newEdges: Edge[] = [];
+
+    // Map endpoints
+    for (const ep of payload.endpoints || []) {
+      const newId = `endpoint-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      idMap.set(ep.id, newId);
+      newNodes.push({
+        id: newId,
+        type: 'endpoint',
+        position: { x: 0, y: 0 },
+        data: {
+          label: ep.label || 'New Endpoint',
+          method: ep.method || 'GET',
+          path: ep.path || '/api/new',
+          description: ep.description || '',
+          statusCodes: ep.statusCodes || [200],
+        }
+      });
+    }
+
+    // Map databases
+    for (const db of payload.databases || []) {
+      const newId = `database-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      idMap.set(db.id, newId);
+      newNodes.push({
+        id: newId,
+        type: 'database',
+        position: { x: 0, y: 0 },
+        data: {
+          label: db.label || 'New Database',
+          tableName: db.tableName || 'new_table',
+          columns: db.columns || [{ name: 'id', type: 'uuid', primaryKey: true }],
+        }
+      });
+    }
+
+    // Map edges
+    for (const e of payload.edges || []) {
+      const source = idMap.get(e.source);
+      const target = idMap.get(e.target);
+      if (source && target) {
+        newEdges.push({
+          id: `e-${source}-${target}-${Date.now()}`,
+          source,
+          target,
+          animated: true,
+          style: { stroke: '#6c63ff', strokeWidth: 2 }
+        });
+      }
+    }
+
+    // Apply layout
+    const positionedNodes = layoutNodes(newNodes, get().nodes);
+
+    set({
+      nodes: [...get().nodes, ...positionedNodes],
+      edges: [...get().edges, ...newEdges],
     });
   },
 }));
