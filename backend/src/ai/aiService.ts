@@ -222,8 +222,8 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const OpenAI = require('openai');
   let baseURL = process.env.OPENAI_BASE_URL;
-  if (baseURL && !baseURL.endsWith('/')) {
-    baseURL += '/';
+  if (baseURL) {
+    baseURL = baseURL.replace(/\/+$/, '') + '/';
   }
 
   const client = new OpenAI({
@@ -232,7 +232,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
   });
 
   const completion = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    model: process.env.OPENAI_MODEL || 'gemini-1.5-flash',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: prompt },
@@ -303,11 +303,10 @@ The IDs must be simple strings (e.g., ep-1, db-1). Do not return anything else.`
         const rawResult = await callOpenAI(request.prompt, sysPrompt);
         console.log('[AI rawResult]:', rawResult);
         
-        // Strip markdown if the LLM ignores instructions
         const cleanJson = rawResult.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJson);
         
-        return { action, result: parsed, usedAI: true, model: process.env.OPENAI_MODEL || 'gpt-4o-mini' };
+        return { action, result: parsed, usedAI: true, model: process.env.OPENAI_MODEL || 'gemini-1.5-flash' };
       } catch (err: any) {
         console.error('[AI Architecture Error]:', err);
         return { action, result: { error: `Failed to generate architecture: ${err.message}` }, usedAI: true };
