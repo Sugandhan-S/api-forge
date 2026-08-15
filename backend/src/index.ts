@@ -15,20 +15,32 @@ dotenv.config();
 const PORT = process.env.PORT || 3001;
 
 /* ─── Flexible CORS Setup ─── */
-const configuredOrigins = (process.env.CORS_ORIGIN || '*')
+const configuredOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
   .map((o) => o.trim().replace(/\/$/, ''));
+
+// Regex to safely allow Vercel preview/deployment subdomains if required
+const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 /* ─── Express App ─── */
 const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || configuredOrigins.includes('*') || configuredOrigins.includes(origin)) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      const isAllowed =
+        configuredOrigins.includes('*') ||
+        configuredOrigins.includes(origin) ||
+        vercelPreviewRegex.test(origin);
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        // Dynamically allow origin for seamless Vercel preview deploys & custom domains
-        callback(null, origin);
+        callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
