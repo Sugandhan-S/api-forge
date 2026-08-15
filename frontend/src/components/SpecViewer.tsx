@@ -87,19 +87,20 @@ function highlightJSON(code: string): string {
   return code
     .split('\n')
     .map((line) => {
-      return line
-        // String keys
-        .replace(/"(\w+)":/g, '<span class="text-cyan-300">"$1"</span>:')
+      const escaped = escapeHtml(line);
+      return escaped
+        // $ref keys (special case of string key, e.g. &quot;$ref&quot;:)
+        .replace(/&quot;(\$ref)&quot;:/g, '<span class="text-purple-400">&quot;$1&quot;</span>:')
+        // String keys (e.g., &quot;id&quot;:)
+        .replace(/&quot;((?:(?!&quot;).)*)&quot;:/g, '<span class="text-cyan-300">&quot;$1&quot;</span>:')
         // String values
-        .replace(/: "([^"]*)"/g, ': <span class="text-emerald-400">"$1"</span>')
+        .replace(/: &quot;((?:(?!&quot;).)*)&quot;/g, ': <span class="text-emerald-400">&quot;$1&quot;</span>')
         // Numbers
         .replace(/: (\d+(\.\d+)?)/g, ': <span class="text-amber-400">$1</span>')
         // Booleans
         .replace(/: (true|false)/g, ': <span class="text-blue-400">$1</span>')
         // Null
         .replace(/: (null)/g, ': <span class="text-[#6e7191]">$1</span>')
-        // $ref values
-        .replace(/"(\$ref)":/g, '<span class="text-purple-400">"$1"</span>:')
         // Brackets/braces
         .replace(/([{}[\]])/g, '<span class="text-[#6e7191]">$1</span>');
     })
