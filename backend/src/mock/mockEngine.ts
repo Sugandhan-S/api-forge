@@ -43,6 +43,7 @@ export interface MockSession {
   router: Router;
   routes: MockRoute[];
   createdAt: string;
+  lastAccessed?: number;
 }
 
 /* ─── Helper: OpenAPI path → Express path ─── */
@@ -155,18 +156,34 @@ export function buildMockRouter(spec: OpenAPISpec, projectId: string): MockSessi
 
 class MockSessionStore {
   private sessions = new Map<string, MockSession>();
+  private readonly maxSessions = parseInt(process.env.MOCK_MAX_SESSIONS || '100', 10);
+  private readonly ttlMs = parseInt(process.env.MOCK_SESSION_TTL_MS || '3600000', 10); // 1 hour
+
+  constructor() {
+    // Cleanup interval every 15 minutes
+    setInterval(() => this.cleanup(), 15 * 60 * 1000).unref();
+  }
 
   create(spec: OpenAPISpec, projectId?: string): MockSession {
+    if (this.sessions.size >= this.maxSessions && !this.sessions.has(projectId || '')) {
+      throw new Error(`Mock server capacity reached (max ${this.maxSessions} sessions).`);
+    }
+
     const id = projectId || uuidv4();
     // Tear down any existing session for this project
     this.sessions.delete(id);
     const session = buildMockRouter(spec, id);
+    session.lastAccessed = Date.now();
     this.sessions.set(id, session);
     return session;
   }
 
   get(projectId: string): MockSession | undefined {
-    return this.sessions.get(projectId);
+    const session = this.sessions.get(projectId);
+    if (session) {
+      session.lastAccessed = Date.now();
+    }
+    return session;
   }
 
   delete(projectId: string): boolean {
@@ -179,6 +196,16 @@ class MockSessionStore {
 
   has(projectId: string): boolean {
     return this.sessions.has(projectId);
+  }
+
+  private cleanup() {
+    const now = Date.now();
+    for (const [id, session] of this.sessions.entries()) {
+      const lastAccessed = session.lastAccessed || new Date(session.createdAt).getTime();
+      if (now - lastAccessed > this.ttlMs) {
+        this.sessions.delete(id);
+      }
+    }
   }
 }
 

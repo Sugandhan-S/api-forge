@@ -317,13 +317,13 @@ The IDs must be simple strings (e.g., ep-1, db-1). Do not return anything else.`
       if (hasOpenAI) {
         try {
           const endpointsText = ast.endpoints.map(
-            (e) => `${e.method} ${e.path} (${e.label})`
+            (e) => `ID: ${e.id} | ${e.method} ${e.path} (${e.label})`
           ).join('\n');
           const result = await callOpenAI(
-            `Generate concise, professional API endpoint descriptions for the following endpoints:\n${endpointsText}\n\nReturn a JSON object mapping each path to its description.`,
+            `Generate concise, professional API endpoint descriptions for the following endpoints:\n${endpointsText}\n\nReturn a JSON object mapping each ID to its description.`,
             'You are an API documentation expert. Return only valid JSON, no markdown.'
           );
-          return { action, result: JSON.parse(result), usedAI: true, model: 'gpt-4o-mini' };
+          return { action, result: JSON.parse(result), usedAI: true, model: process.env.OPENAI_MODEL || 'gemini-3.5-flash' };
         } catch {
           // Fallback to template
         }

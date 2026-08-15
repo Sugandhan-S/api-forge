@@ -133,13 +133,14 @@ export function ExportPanel({ isOpen, onClose }: ExportPanelProps) {
         case 'swagger-ui': {
           setSwaggerStatus('pushing');
           // Push spec to backend and open Swagger UI
-          const res = await fetch(`${BACKEND_URL}/docs/spec`, {
+          const projectId = useCanvasStore.getState().projectId;
+          const res = await fetch(`${BACKEND_URL}/docs/spec/${projectId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ spec }),
           });
           if (!res.ok) throw new Error('Failed to push spec');
-          const url = `${BACKEND_URL}/docs/`;
+          const url = `${BACKEND_URL}/docs/${projectId}`;
           setSwaggerUrl(url);
           setSwaggerStatus('ready');
           window.open(url, '_blank', 'noopener,noreferrer');
