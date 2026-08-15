@@ -232,7 +232,7 @@ async function callOpenAI(prompt: string, systemPrompt: string): Promise<string>
   });
 
   const completion = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gemini-1.5-flash',
+    model: process.env.OPENAI_MODEL || 'gemini-3.5-flash',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: prompt },

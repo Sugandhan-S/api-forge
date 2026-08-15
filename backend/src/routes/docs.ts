@@ -4,15 +4,39 @@ import fs from 'fs';
 
 const router = Router();
 
+/* ─── Escape Helpers ─── */
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeJsString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/<\/script>/gi, '<\\/script>');
+}
+
 /* ─── Swagger UI HTML ─── */
 
 function getSwaggerHTML(specUrl: string, title: string): string {
+  const escapedTitle = escapeHtml(title);
+  const escapedSpecUrl = escapeJsString(specUrl);
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${title} — API Docs</title>
+  <title>${escapedTitle} — API Docs</title>
   <link rel="stylesheet" href="/docs/swagger-ui.css" />
   <style>
     body { margin: 0; background: #0a0b0f; }
@@ -40,7 +64,7 @@ function getSwaggerHTML(specUrl: string, title: string): string {
   <script>
     window.onload = function() {
       SwaggerUIBundle({
-        url: "${specUrl}",
+        url: "${escapedSpecUrl}",
         dom_id: '#swagger-ui',
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         plugins: [SwaggerUIBundle.plugins.DownloadUrl],
