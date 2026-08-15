@@ -11,6 +11,7 @@ import { generatePostmanCollection, postmanToJSON } from '../generators/postmanG
 import { generateMarkdownDocs } from '../generators/markdownGenerator';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import { apiFetch } from '../utils/apiClient';
 
 /* ─── Download helper ─── */
 
@@ -134,13 +135,13 @@ export function ExportPanel({ isOpen, onClose }: ExportPanelProps) {
           setSwaggerStatus('pushing');
           // Push spec to backend and open Swagger UI
           const projectId = useCanvasStore.getState().projectId;
-          const res = await fetch(`${BACKEND_URL}/docs/spec/${projectId}`, {
+          const res = await apiFetch(`/docs/spec/${projectId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ spec }),
           });
           if (!res.ok) throw new Error('Failed to push spec');
-          const url = `${BACKEND_URL}/docs/${projectId}`;
+          const url = `${BACKEND_URL}/docs/ui/${projectId}`;
           setSwaggerUrl(url);
           setSwaggerStatus('ready');
           window.open(url, '_blank', 'noopener,noreferrer');

@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useCanvasStore } from '../stores/canvasStore';
 import { buildAST } from '../generators/astBuilder';
 import { computeCanvasHash } from '../utils/canvasHash';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import { apiFetch, BACKEND_URL } from '../utils/apiClient';
 
 /* ─── Types ─── */
 
@@ -130,7 +129,7 @@ export function useAI(): UseAIReturn {
 
   /* ── Check AI status on mount & auto-load latest cached action ── */
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/ai/status`)
+    apiFetch('/api/ai/status')
       .then((r) => r.json())
       .then((d) => setAiConfigured(d.configured))
       .catch(() => setAiConfigured(false));
@@ -162,7 +161,7 @@ export function useAI(): UseAIReturn {
       try {
         const ast = buildAST(nodes, edges, 'User Service API', '1.0.0');
 
-        const res = await fetch(`${BACKEND_URL}/api/ai/run`, {
+        const res = await apiFetch('/api/ai/run', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action, ast, targetEndpointId, prompt }),

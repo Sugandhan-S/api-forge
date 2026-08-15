@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import { apiFetch } from '../utils/apiClient';
 
 /* ─── Types ─── */
 
@@ -61,7 +60,7 @@ export function useMockServer(): UseMockServerReturn {
     setError(null);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/mock/start`, {
+      const res = await apiFetch('/api/mock/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spec }),
@@ -89,7 +88,7 @@ export function useMockServer(): UseMockServerReturn {
     setStatus('stopping');
 
     try {
-      await fetch(`${BACKEND_URL}/api/mock/stop/${session.projectId}`, {
+      await apiFetch(`/api/mock/stop/${session.projectId}`, {
         method: 'DELETE',
       });
     } catch {

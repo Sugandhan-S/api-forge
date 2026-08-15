@@ -124,10 +124,10 @@ router.post('/spec/:projectId', (req, res) => {
     return;
   }
   cachedSpecs.set(projectId, { spec, expiresAt: Date.now() + SPEC_TTL });
-  res.json({ success: true, specUrl: `/docs/spec/${projectId}.json` });
+  res.json({ success: true, specUrl: `/docs/spec/${projectId}/openapi.json` });
 });
 
-router.get('/spec/:projectId.json', (req, res) => {
+router.get('/spec/:projectId/openapi.json', (req, res) => {
   const { projectId } = req.params;
   const entry = cachedSpecs.get(projectId);
   if (!entry) {
@@ -141,7 +141,7 @@ router.get('/spec/:projectId.json', (req, res) => {
 
 /* ─── Swagger UI HTML page ─── */
 
-router.get('/:projectId', (req, res) => {
+router.get('/ui/:projectId', (req, res) => {
   if (!swaggerUiDist) {
     res.status(503).send('<h1>Swagger UI not available</h1><p>swagger-ui-dist package not installed.</p>');
     return;
@@ -149,7 +149,7 @@ router.get('/:projectId', (req, res) => {
   const { projectId } = req.params;
   const entry = cachedSpecs.get(projectId);
   const title = (entry?.spec as { info?: { title?: string } })?.info?.title || 'APIForge Project';
-  res.type('text/html').send(getSwaggerHTML(`/docs/spec/${projectId}.json`, title));
+  res.type('text/html').send(getSwaggerHTML(`/docs/spec/${projectId}/openapi.json`, title));
 });
 
 export default router;
