@@ -8,6 +8,7 @@ import mockRouter from './routes/mock';
 import aiRouter from './routes/ai';
 import docsRouter from './routes/docs';
 import { mockSessionStore } from './mock/mockEngine';
+import { apiKeyAuth } from './middleware/apiKeyAuth';
 
 dotenv.config();
 
@@ -62,16 +63,16 @@ app.get('/api/health', (_req, res) => {
     activeMockSessions: mockSessionStore.list().length,
     ai: {
       configured: !!process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || 'gemini-1.5-flash',
+      model: process.env.OPENAI_MODEL || 'gemini-3.5-flash',
     },
   });
 });
 
 /* ─── Routes ─── */
-app.use('/api/openapi', openapiRouter);  // Phase 3
-app.use('/api/mock', mockRouter);         // Phase 4
-app.use('/api/ai', aiRouter);             // Phase 7
-app.use('/docs', docsRouter);             // Phase 8
+app.use('/api/openapi', openapiRouter);           // Phase 3 (public — spec parsing only)
+app.use('/api/mock', apiKeyAuth, mockRouter);     // Phase 4 — protected
+app.use('/api/ai', apiKeyAuth, aiRouter);         // Phase 7 — protected (rate limiting applied inside)
+app.use('/docs', apiKeyAuth, docsRouter);         // Phase 8 — protected
 
 /* ─── Projects (Phase 6 — full persistence via Supabase in production) ─── */
 app.get('/api/projects', (_req, res) => {

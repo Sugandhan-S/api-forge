@@ -15,8 +15,8 @@ import {
   XCircle,
 } from 'lucide-react';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 import { useCanvasStore } from '../stores/canvasStore';
+import { apiFetch } from '../utils/apiClient';
 import { buildAST } from '../generators/astBuilder';
 import { generateOpenAPISpec, specToJSON, specToYAML } from '../generators/openApiGenerator';
 
@@ -322,7 +322,7 @@ export function SpecViewer({ isOpen, onClose }: SpecViewerProps) {
       const { generateOpenAPISpec: genSpec } = await import('../generators/openApiGenerator');
       const specObj = genSpec(ast);
 
-      const res = await fetch(`${BACKEND_URL}/api/openapi/validate`, {
+      const res = await apiFetch('/api/openapi/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spec: specObj }),
