@@ -99,35 +99,57 @@ if (swaggerUiDist) {
 
 /* ─── Spec endpoint — accepts POSTed spec and caches it in memory ─── */
 
-let cachedSpec: unknown = null;
+interface CachedSpecEntry {
+  spec: unknown;
+  expiresAt: number;
+}
+const cachedSpecs = new Map<string, CachedSpecEntry>();
+const SPEC_TTL = 3600 * 1000; // 1 hour
 
-router.post('/spec', (req, res) => {
+// Periodically clean up expired specs
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, entry] of cachedSpecs.entries()) {
+    if (now > entry.expiresAt) {
+      cachedSpecs.delete(id);
+    }
+  }
+}, 15 * 60 * 1000).unref();
+
+router.post('/spec/:projectId', (req, res) => {
+  const { projectId } = req.params;
   const { spec } = req.body;
   if (!spec) {
     res.status(400).json({ error: 'Missing spec' });
     return;
   }
-  cachedSpec = spec;
-  res.json({ success: true, specUrl: '/docs/spec.json' });
+  cachedSpecs.set(projectId, { spec, expiresAt: Date.now() + SPEC_TTL });
+  res.json({ success: true, specUrl: `/docs/spec/${projectId}.json` });
 });
 
-router.get('/spec.json', (_req, res) => {
-  if (!cachedSpec) {
-    res.status(404).json({ error: 'No spec loaded. POST to /docs/spec first.' });
+router.get('/spec/:projectId.json', (req, res) => {
+  const { projectId } = req.params;
+  const entry = cachedSpecs.get(projectId);
+  if (!entry) {
+    res.status(404).json({ error: 'No spec loaded for this project. POST to /docs/spec/:projectId first.' });
     return;
   }
-  res.json(cachedSpec);
+  // Refresh TTL on access
+  entry.expiresAt = Date.now() + SPEC_TTL;
+  res.json(entry.spec);
 });
 
 /* ─── Swagger UI HTML page ─── */
 
-router.get('/', (_req, res) => {
+router.get('/:projectId', (req, res) => {
   if (!swaggerUiDist) {
     res.status(503).send('<h1>Swagger UI not available</h1><p>swagger-ui-dist package not installed.</p>');
     return;
   }
-  const title = (cachedSpec as { info?: { title?: string } })?.info?.title || 'APIForge Project';
-  res.type('text/html').send(getSwaggerHTML('/docs/spec.json', title));
+  const { projectId } = req.params;
+  const entry = cachedSpecs.get(projectId);
+  const title = (entry?.spec as { info?: { title?: string } })?.info?.title || 'APIForge Project';
+  res.type('text/html').send(getSwaggerHTML(`/docs/spec/${projectId}.json`, title));
 });
 
 export default router;

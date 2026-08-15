@@ -42,7 +42,11 @@ router.post('/start', (req, res) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    res.status(500).json({ error: `Failed to start mock server: ${message}` });
+    if (message.includes('capacity reached')) {
+      res.status(429).json({ error: message });
+    } else {
+      res.status(500).json({ error: `Failed to start mock server: ${message}` });
+    }
   }
 });
 

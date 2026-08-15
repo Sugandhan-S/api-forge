@@ -1,14 +1,23 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { runAI, type AIAction } from '../ai/aiService';
 
 const router = Router();
+
+const aiRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: parseInt(process.env.AI_RATE_LIMIT || '10', 10), // default 10 requests per minute
+  message: { error: 'Too many AI requests from this IP, please try again after a minute.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * POST /api/ai/run
  * Body: { action, ast, targetEndpointId? }
  * Returns AI-generated content (descriptions, tests, request body, issues)
  */
-router.post('/run', async (req, res) => {
+router.post('/run', aiRateLimiter, async (req, res) => {
   try {
     const { action, ast, targetEndpointId, prompt } = req.body;
 
