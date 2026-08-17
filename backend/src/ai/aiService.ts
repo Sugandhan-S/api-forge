@@ -345,8 +345,8 @@ The IDs must be simple strings (e.g., ep-1, db-1). Do not return anything else.`
             (s) => `${s.name}: ${s.properties.map((p) => `${p.name}(${p.type})`).join(', ')}`
           ).join('\n');
           const result = await callOpenAI(
-            `For a ${targetEndpoint.method} ${targetEndpoint.path} endpoint, suggest a request body schema.\nAvailable schemas:\n${schemaContext}\nReturn JSON array of { name, type, required, description } fields.`,
-            'You are an API design expert. Return only a valid JSON array, no markdown.'
+            `For a ${targetEndpoint.method} ${targetEndpoint.path} endpoint, suggest a request body schema.\nAvailable schemas:\n${schemaContext}\nReturn a JSON array of objects, each exactly matching this format:\n{ "name": "string", "type": "string", "required": boolean, "description": "string" }`,
+            'You are an API design expert. Return only a valid JSON array of objects. Do not use markdown blocks or any other text.'
           );
           return { action, result: JSON.parse(result), usedAI: true, model: 'gpt-4o-mini' };
         } catch {
@@ -364,8 +364,8 @@ The IDs must be simple strings (e.g., ep-1, db-1). Do not return anything else.`
             (e) => `${e.method} ${e.path} → ${e.statusCodes.join(', ')}`
           ).join('\n');
           const result = await callOpenAI(
-            `Generate test cases for these API endpoints:\n${specSummary}\n\nReturn a JSON array of test suites with scenarios and assertions.`,
-            'You are a senior QA engineer. Return only valid JSON, no markdown fences.'
+            `Generate test cases for these API endpoints:\n${specSummary}\n\nReturn a JSON array where each object strictly matches this schema:\n{\n  "name": "Suite Name (e.g. Users API)",\n  "scenarios": [\n    {\n      "name": "Scenario Name",\n      "statusCode": 200,\n      "assertions": ["Expected assertion 1", "Expected assertion 2"]\n    }\n  ]\n}`,
+            'You are a senior QA engineer. Return ONLY a valid JSON array matching the exact schema requested. Do not include markdown formatting or explanations.'
           );
           return { action, result: JSON.parse(result), usedAI: true, model: 'gpt-4o-mini' };
         } catch {
