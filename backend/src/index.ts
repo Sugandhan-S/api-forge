@@ -72,7 +72,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/openapi', openapiRouter);           // Phase 3 (public — spec parsing only)
 app.use('/api/mock', apiKeyAuth, mockRouter);     // Phase 4 — protected
 app.use('/api/ai', apiKeyAuth, aiRouter);         // Phase 7 — protected (rate limiting applied inside)
-app.use('/docs', apiKeyAuth, docsRouter);         // Phase 8 — protected
+app.use('/docs', docsRouter);                     // Phase 8 — public (in-memory caching, viewed in browser)
 
 /* ─── Projects (Phase 6 — full persistence via Supabase in production) ─── */
 app.get('/api/projects', (_req, res) => {
